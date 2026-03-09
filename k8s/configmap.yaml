@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: expensy-config
+  namespace: taco-expensy
 data:
   PORT: "8706"
   REDIS_HOST: "redis-service"

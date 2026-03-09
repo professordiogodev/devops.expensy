@@ -13,5 +13,5 @@
 - We utilize `Kubernetes Secrets` (Opaque) to securely inject sensitive variables (e.g., MongoDB URIs and Redis passwords) into the containers at runtime.
 
 ## 4. Compliance (GDPR)
-- All user data (MongoDB) is hosted within an Azure cluster located in the `West Europe` region.
+- All user data (MongoDB) is hosted within an Azure cluster located in the `Germany West Central` region.
 - This architectural decision ensures that all data remains within the European Economic Area, strictly complying with the data residency and sovereignty requirements of the General Data Protection Regulation (GDPR).
