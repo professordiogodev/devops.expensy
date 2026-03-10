@@ -1,0 +1,60 @@
+# MongoDB Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: mongo-deployment 
+  namespace: taco-expensy  
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: mongo } }
+  template:
+    metadata: { labels: { app: mongo } }
+    spec:
+      containers:
+      - name: mongo
+        image: mongo:latest
+        ports: [{ containerPort: 27017 }]
+        env:
+        - { name: MONGO_INITDB_ROOT_USERNAME, value: "root" }
+        - { name: MONGO_INITDB_ROOT_PASSWORD, value: "example" }
+---
+# MongoDB Service
+apiVersion: v1
+kind: Service
+metadata: 
+  name: mongo-service 
+  namespace: taco-expensy  
+spec:
+  selector: { app: mongo }
+  ports: [{ port: 27017 }]
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: redis-deployment 
+  namespace: taco-expensy  
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: redis } }
+  template:
+    metadata: { labels: { app: redis } }
+    spec:
+      containers:
+      - name: redis
+        image: redis:latest
+        ports: [{ containerPort: 6379 }]
+        command: ["redis-server", "--requirepass", "$(REDIS_PASSWORD)"]
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom: { secretKeyRef: { name: expensy-secrets, key: REDIS_PASSWORD } }
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata: 
+  name: redis-service 
+  namespace: taco-expensy  
+spec:
+  selector: { app: redis }
+  ports: [{ port: 6379 }]

@@ -80,3 +80,14 @@ npm run dev
 - **Backend**: Express, TypeScript, Mongoose, ioredis, prom-client
 - **Database**: MongoDB
 - **Cache**: Redis
+
+## Monitoring & Logging
+
+**Log Visualization:**
+- Container logs are pushed to standard output (`stdout`) and captured automatically by Kubernetes.
+- We utilize **Azure Monitor** for centralized log aggregation. Logs can be viewed in the Azure Portal by navigating to the AKS Cluster -> Logs and querying the `ContainerLog` table.
+
+**Metrics (Prometheus & Grafana):**
+- The backend application exposes custom metrics (such as `expenses_total`) at the `/metrics` endpoint.
+- Prometheus scrapes this data every 15 seconds (configured via `monitoring/prometheus-config.yaml`).
+- To view the visual dashboard, import the `monitoring/grafana-dashboard.json` file into your Grafana instance.

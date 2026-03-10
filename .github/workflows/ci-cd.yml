@@ -1,0 +1,65 @@
+name: Expensy CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  DOCKER_USER: blamkr
+  CLUSTER_NAME: dv-ft-main-cluster
+  RESOURCE_GROUP: diogos-_group
+  NAMESPACE: taco-expensy
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # 1. Login to Docker Hub (public image push still needs login)
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # 2. Login to Azure
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # 3. Build and Push Backend
+    - name: Build and Push Backend
+      run: |
+        docker build -t ${{ env.DOCKER_USER }}/expensy-backend:${{ github.sha }} ./expensy_backend
+        docker push ${{ env.DOCKER_USER }}/expensy-backend:${{ github.sha }}
+
+    # 4. Build and Push Frontend
+    - name: Build and Push Frontend
+      run: |
+        docker build --build-arg NEXT_PUBLIC_API_URL=/api \
+          -t ${{ env.DOCKER_USER }}/expensy-frontend:${{ github.sha }} ./expensy_frontend
+        docker push ${{ env.DOCKER_USER }}/expensy-frontend:${{ github.sha }}
+
+    # 5. Set AKS Context
+    - name: Set AKS Context
+      uses: azure/aks-set-context@v3
+      with:
+        resource-group: ${{ env.RESOURCE_GROUP }}
+        cluster-name: ${{ env.CLUSTER_NAME }}
+
+    # 6. Create namespace if it doesn't exist
+    - name: Create Namespace
+      run: |
+        kubectl get namespace ${{ env.NAMESPACE }} || \
+        kubectl create namespace ${{ env.NAMESPACE }}
+
+    # 7. Deploy to AKS in taco-expensy namespace
+    - name: Deploy to AKS
+      run: |
+        sed -i "s|image: .*expensy-backend:latest|image: ${{ env.DOCKER_USER }}/expensy-backend:${{ github.sha }}|g" k8s/apps.yaml
+        sed -i "s|image: .*expensy-frontend:latest|image: ${{ env.DOCKER_USER }}/expensy-frontend:${{ github.sha }}|g" k8s/apps.yaml
+        kubectl apply -f k8s/ -n ${{ env.NAMESPACE }}
