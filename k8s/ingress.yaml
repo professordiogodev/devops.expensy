@@ -12,7 +12,7 @@ spec:
     - http:
         paths:
           # (Backend/API)
-          - path: /taco/api(/|$)(.*)
+          - path: /taco(/|$)(api.*)
             pathType: ImplementationSpecific
             backend:
               service:
