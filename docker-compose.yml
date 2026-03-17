@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: expensy-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:7.2
+    container_name: expensy-redis
+    ports:
+      - '6379:6379'
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+
+  backend:
+    build:
+      context: ./expensy_backend
+      dockerfile: Dockerfile
+    container_name: expensy-backend
+    ports:
+      - '8706:8706'
+    environment:
+      PORT: 8706
+      DATABASE_URI: mongodb://root:example@mongo:27017/expensy?authSource=admin
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./expensy_frontend
+      dockerfile: Dockerfile
+    container_name: expensy-frontend
+    ports:
+      - '3000:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8706
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
